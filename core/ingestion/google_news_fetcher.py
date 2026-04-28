@@ -18,9 +18,9 @@ class GoogleNewsFetcher(BaseFetcher):
             # feedparser is blocking → run in thread
             feed = await asyncio.to_thread(feedparser.parse, url)
             for entry in feed.entries:
-                published = datetime.utcnow()
-                if hasattr(entry, "published_parsed") and entry.published_parsed:
-                    published = datetime(*entry.published_parsed[:6])
+                if not hasattr(entry, "published_parsed") or not entry.published_parsed:
+                    continue
+                published = datetime(*entry.published_parsed[:6])
                 items.append(NewsItem(
                     title=entry.title,
                     url=entry.link,

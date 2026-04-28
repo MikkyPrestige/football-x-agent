@@ -9,6 +9,9 @@ FEEDS = {
     "BBC Sport": "http://feeds.bbci.co.uk/sport/football/rss.xml",
     "Sky Sports": "https://www.skysports.com/rss/12040",
     "ESPN FC": "https://www.espn.com/espn/rss/soccer/news",
+    "The Guardian Football": "https://www.theguardian.com/football/rss",
+    "Daily Mail Football": "https://www.dailymail.co.uk/sport/football/articles.rss",
+    "Goal.com (via Feedburner)": "https://feeds.feedburner.com/goalnews",
 }
 
 class RSSFetcher(BaseFetcher):
@@ -19,22 +22,20 @@ class RSSFetcher(BaseFetcher):
         items = []
         for source_name, url in self.feeds.items():
             try:
-                # Run blocking feedparser.parse in a thread
                 feed = await asyncio.to_thread(feedparser.parse, url)
                 for entry in feed.entries:
-                    published = datetime.utcnow()
-                    if hasattr(entry, "published_parsed") and entry.published_parsed:
-                        published = datetime(*entry.published_parsed[:6])
+                    if not hasattr(entry, 'published_parsed') or not entry.published_parsed:
+                        continue
+                    published = datetime(*entry.published_parsed[:6])
                     items.append(NewsItem(
                         title=entry.title,
                         url=entry.link,
                         source=source_name,
                         published=published,
-                        raw_text=entry.get("summary", "")
+                        raw_text=entry.get('summary', '')
                     ))
                 record_success(source_name)
             except Exception as e:
                 record_failure(source_name)
-                # Log the error but continue with other sources
-                print(f"RSS fetch failed for {source_name}: {e}")
+                print(f'RSS fetch failed for {source_name}: {e}')
         return items

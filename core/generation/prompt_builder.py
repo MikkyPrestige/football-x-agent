@@ -44,7 +44,7 @@ def build_prompt(item: NewsItem, event_tag: str, mode: str = None) -> tuple[str,
     system = BASE_IDENTITY.strip() + "\n\n" + mode_prompt.strip()
     # Add current date and hard rule to prevent hallucination
     today = datetime.utcnow().strftime("%d %B %Y")
-    system += f"\n\nToday is {today}. Only use information present in the news item title or raw text. Do not mention players, managers, or events that are not explicitly mentioned in the item. Do not assume any current state of clubs or players based on your training data."
+    system += f"\n\nToday is {today}. Only use information present in the news item title or raw text. Do not mention players, managers, or events that are not explicitly mentioned in the item. Do not assume any current state of clubs or players based on your training data. The UEFA Champions League no longer drops eliminated teams into the Europa League."
     
     # Add active rules from database
     with SessionLocal() as session:

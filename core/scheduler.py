@@ -45,7 +45,11 @@ async def fetch_all_and_process():
         print(f"Fetching {name}...")
         items = await fetcher.fetch()
         print(f"  {name}: got {len(items)} items")
-        relevant = [item for item in items if is_relevant(item.title) and item.published > datetime.utcnow() - timedelta(hours=MAX_AGE_HOURS)]
+        # 1. Remove items older than MAX_AGE_HOURS
+        fresh_items = [item for item in items if item.published and item.published > datetime.utcnow() - timedelta(hours=MAX_AGE_HOURS)]
+        print(f"  {name}: {len(fresh_items)} fresh items (within {MAX_AGE_HOURS}h)")
+        # 2. Apply relevance filter
+        relevant = [item for item in fresh_items if is_relevant(item.title)]
         print(f"  {name}: {len(relevant)} relevant items, processing first {min(MAX_ITEMS_PER_SOURCE, len(relevant))}")
         for item in relevant[:MAX_ITEMS_PER_SOURCE]:
             if llm_calls >= MAX_LLM_CALLS_PER_CYCLE:
