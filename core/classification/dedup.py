@@ -51,7 +51,8 @@ def is_duplicate(item: NewsItem, event_type: str) -> bool:
                 # Fall through to store new entry
 
     # 3. Store new hash
-    expiry = datetime.utcnow() + timedelta(hours=2)
+    hours = 2 if event_type in LIVE_TAGS else 24
+expiry = datetime.utcnow() + timedelta(hours=hours)
     new_entry = EventCache(event_hash=event_hash, created_at=datetime.utcnow(), expiry=expiry)
     with SessionLocal() as session:
         session.merge(new_entry)

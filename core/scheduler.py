@@ -51,7 +51,8 @@ async def fetch_all_and_process():
         # 2. Apply relevance filter
         relevant = [item for item in fresh_items if is_relevant(item.title)]
         print(f"  {name}: {len(relevant)} relevant items, processing first {min(MAX_ITEMS_PER_SOURCE, len(relevant))}")
-        for item in relevant[:MAX_ITEMS_PER_SOURCE]:
+        import random
+for item in random.sample(relevant, min(MAX_ITEMS_PER_SOURCE, len(relevant))):
             if llm_calls >= MAX_LLM_CALLS_PER_CYCLE:
                 print("  ⚠️ Reached cycle LLM call limit. Stopping.")
                 break
