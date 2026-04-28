@@ -7,13 +7,11 @@ client = OpenAI(
     base_url="https://api.groq.com/openai/v1",
 )
 
-DEFAULT_MODEL = "llama-3.3-70b-versatile"
+DEFAULT_MODEL = "llama-3.1-8b-instant"   # 14,400 req/day, free tier
 MAX_RETRIES = 2
 
 def generate_tweet(system_prompt: str, user_prompt: str, n: int = 1) -> list[str]:
-    """
-    Generate one or more tweet texts. Because Groq limits n=1, we call per variant.
-    """
+    """Generate one or more tweet texts. Because Groq limits n=1, we call per variant."""
     variants = []
     for _ in range(n):
         for attempt in range(1, MAX_RETRIES + 2):
@@ -28,7 +26,7 @@ def generate_tweet(system_prompt: str, user_prompt: str, n: int = 1) -> list[str
                     temperature=0.9,
                 )
                 variants.append(response.choices[0].message.content.strip())
-                break  # success, exit retry loop
+                break
             except Exception as e:
                 if attempt <= MAX_RETRIES:
                     print(f"LLM call failed (attempt {attempt}/{MAX_RETRIES+1}): {e}. Retrying...")
