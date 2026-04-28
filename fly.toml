@@ -1,8 +1,5 @@
 app = "football-x-agent"
 
-[build]
-  image = "Dockerfile"
-
 [[vm]]
   size = "shared-cpu-1x"
   memory = "256mb"
