@@ -13,16 +13,12 @@ LIVE_TAGS = {"LIVE_GOAL", "LIVE_CARD", "LIVE_OTHER"}
 
 def generate_event_hash(item: NewsItem, event_type: str) -> str:
     """Create a unique hash from source, normalized title, event type, and rounded timestamp."""
-    # Normalize title: lowercase, strip extra whitespace
     normalized_title = " ".join(item.title.lower().split())
-    # Round timestamp to the hour for normal events, to 5 minutes for live events
     if event_type in LIVE_TAGS:
-        # Round to nearest 5 minutes
         minute_bucket = (item.published.minute // 5) * 5
         rounded = item.published.replace(minute=minute_bucket, second=0, microsecond=0)
     else:
         rounded = item.published.replace(minute=0, second=0, microsecond=0)
-    # Build a stable string for hashing
     raw = f"{item.source}|{normalized_title}|{event_type}|{rounded.isoformat()}"
     return hashlib.sha256(raw.encode()).hexdigest()
 
@@ -38,21 +34,17 @@ def is_duplicate(item: NewsItem, event_type: str) -> bool:
     with SessionLocal() as session:
         existing = session.get(EventCache, event_hash)
         if existing:
-            # Found in DB, still valid? (should be very recent; we clean up old entries later)
             if existing.expiry > datetime.utcnow():
-                # Also add to memory for future quick checks
                 _recent_hashes.add(event_hash)
                 return True
             else:
-                # Expired – remove from DB and memory, it's no longer a duplicate
                 session.delete(existing)
                 session.commit()
                 _recent_hashes.discard(event_hash)
-                # Fall through to store new entry
 
     # 3. Store new hash
     hours = 2 if event_type in LIVE_TAGS else 24
-expiry = datetime.utcnow() + timedelta(hours=hours)
+    expiry = datetime.utcnow() + timedelta(hours=hours)
     new_entry = EventCache(event_hash=event_hash, created_at=datetime.utcnow(), expiry=expiry)
     with SessionLocal() as session:
         session.merge(new_entry)
@@ -63,6 +55,4 @@ expiry = datetime.utcnow() + timedelta(hours=hours)
 
 def cleanup_memory_cache():
     """Remove memory hashes that are older than 2 hours (call periodically)."""
-    # Since we don't store timestamps in memory, we just clear the whole set.
-    # A more refined approach could store (hash, expiry) but for our volume this is fine.
     _recent_hashes.clear()
