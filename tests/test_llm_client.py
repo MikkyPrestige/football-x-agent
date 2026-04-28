@@ -3,7 +3,7 @@ import asyncio
 from datetime import datetime
 from core.ingestion.base import NewsItem
 from core.generation.prompt_builder import build_prompt
-from core.generation.llm_client import generate_tweet
+from core.generation.llm_client import generate_tweet, PRIMARY_MODEL
 
 async def main():
     item = NewsItem(
@@ -16,7 +16,7 @@ async def main():
     event_tag = "TRANSFER"
     system, user = build_prompt(item, event_tag)
 
-    print("Generating tweet with Groq…\n")
+    print(f"Generating tweet with {PRIMARY_MODEL}…\n")
     try:
         tweets = generate_tweet(system, user, n=1)
         for i, t in enumerate(tweets, 1):
