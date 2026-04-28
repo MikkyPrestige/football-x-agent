@@ -1,4 +1,5 @@
 #!/bin/bash
+mkdir -p /app/data
 # Start both processes for the Football Twitter Agent
 
 echo "Starting Football Twitter Agent..."
