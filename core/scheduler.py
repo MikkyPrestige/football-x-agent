@@ -2,14 +2,16 @@
 import asyncio
 import time
 import schedule
+from datetime import datetime
 from core.ingestion.rss_fetcher import RSSFetcher
 from core.ingestion.reddit_fetcher import RedditFetcher
 from core.ingestion.google_news_fetcher import GoogleNewsFetcher
 from core.ingestion.api_football_fetcher import APIFootballFetcher
 from core.generation.queue_manager import process_item
+from core.analytics.engine import run_weekly_analytics
 
-MAX_ITEMS_PER_SOURCE = 5       # only process top 5 relevant items per source
-MAX_LLM_CALLS_PER_CYCLE = 10   # total LLM calls allowed per 10-min cycle
+MAX_ITEMS_PER_SOURCE = 5
+MAX_LLM_CALLS_PER_CYCLE = 10
 
 RELEVANCE_KEYWORDS = {
     "goal", "transfer", "sign", "deal", "rumour", "injury", "manager",
@@ -47,7 +49,7 @@ async def fetch_all_and_process():
                 print("  ⚠️ Reached cycle LLM call limit. Stopping.")
                 break
             await process_item(item)
-            llm_calls += 3  # 3 variants per normal item; approximation
+            llm_calls += 3
 
 def job():
     print("\n⏰ Running scheduled job...")
@@ -57,10 +59,16 @@ def job():
     except Exception as e:
         print(f"❌ Job failed: {e}")
 
+def analytics_job():
+    print("📊 Running weekly analytics...")
+    run_weekly_analytics()
+    print("✅ Analytics complete.")
+
 def main():
-    schedule.every(10).minutes.do(job)   # increased to 10 min
-    print("Scheduler started — running every 10 minutes.")
-    job()  # run one immediately
+    schedule.every(10).minutes.do(job)
+    schedule.every().monday.at("02:00").do(analytics_job)
+    print("Scheduler started — news every 10 min, analytics on Monday 02:00.")
+    job()
     while True:
         schedule.run_pending()
         time.sleep(1)

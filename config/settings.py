@@ -11,6 +11,7 @@ API_FOOTBALL_KEY = os.getenv("API_FOOTBALL_KEY")
 
 # Database
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///data/agent.db")
+ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
 
 # Caps and limits
 NORMAL_DAILY_CAP = 5          # max normal tweets posted per day
