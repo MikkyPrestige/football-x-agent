@@ -1,12 +1,17 @@
-"""Telegram bot entry point. Run with: python bot/main.py"""
+"""Telegram bot entry point. Run with: python -m bot.main"""
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 from config.settings import TELEGRAM_BOT_TOKEN
-from bot.handlers import start, queue_callback, stats, rules, addrule, source_status, button_handler
+from bot.handlers import (
+    start, queue_callback, stats, rules, addrule, source_status,
+    posted, metrics, button_handler
+)
 
 def main():
     app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("queue", queue_callback))
+    app.add_handler(CommandHandler("posted", posted))
+    app.add_handler(CommandHandler("metrics", metrics))
     app.add_handler(CommandHandler("stats", stats))
     app.add_handler(CommandHandler("rules", rules))
     app.add_handler(CommandHandler("addrule", addrule))

@@ -14,6 +14,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "I'll push live match events and keep a queue of normal drafts for you to review.\n\n"
         "Commands:\n"
         "/queue - View pending normal drafts\n"
+        "/posted <draft_id> - Mark a draft as posted and link a tweet ID\n"
+        "/metrics <tweet_id> <likes> <retweets> <replies> <impressions> - Enter manual metrics\n"
         "/stats - Top & bottom tweets\n"
         "/rules - View / approve style rules\n"
         "/addrule <text> - Add a manual rule\n"
@@ -43,6 +45,69 @@ async def queue_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=copy_buttons(draft.id, variants),
             parse_mode="Markdown"
         )
+
+# ---------- posted ----------
+async def posted(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.args:
+        await update.message.reply_text("Usage: /posted <draft_id> [tweet_url_or_id]")
+        return
+
+    draft_id = int(context.args[0])
+    tweet_ref = context.args[1] if len(context.args) > 1 else f"manual_{draft_id}"
+
+    with SessionLocal() as session:
+        draft = session.get(Draft, draft_id)
+        if not draft:
+            await update.message.reply_text("Draft not found.")
+            return
+
+        # Create a tweet record
+        tweet = Tweet(
+            id=tweet_ref,  # store URL or manual ID
+            draft_id=draft.id,
+            text=draft.text_variants[0],  # assume posted text matches V1; user can edit later
+            posted_at=datetime.utcnow(),
+            likes=0,
+            retweets=0,
+            replies=0,
+            impressions=0,
+        )
+        session.add(tweet)
+
+        draft.status = "posted"
+        draft.selected_variant = 0
+        session.commit()
+
+    await update.message.reply_text(
+        f"✅ Draft #{draft_id} marked as posted and linked to tweet `{tweet_ref}`.\n"
+        "Later, use `/metrics {tweet_ref} <likes> <retweets> <replies> <impressions>` to add engagement."
+    )
+
+# ---------- metrics ----------
+async def metrics(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if len(context.args) != 5:
+        await update.message.reply_text("Usage: /metrics <tweet_ref> <likes> <retweets> <replies> <impressions>")
+        return
+
+    tweet_ref = context.args[0]
+    likes, retweets, replies, impressions = map(int, context.args[1:])
+
+    with SessionLocal() as session:
+        tweet = session.get(Tweet, tweet_ref)
+        if not tweet:
+            await update.message.reply_text("Tweet not found.")
+            return
+        tweet.likes = likes
+        tweet.retweets = retweets
+        tweet.replies = replies
+        tweet.impressions = impressions
+        tweet.last_metrics_fetch = datetime.utcnow()
+        session.commit()
+
+    await update.message.reply_text(
+        f"✅ Metrics updated for tweet `{tweet_ref}`: "
+        f"❤️ {likes} 🔄 {retweets} 💬 {replies} 👀 {impressions}"
+    )
 
 # ---------- stats ----------
 async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -93,10 +158,7 @@ async def rules(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     InlineKeyboardButton("Reject", callback_data=f"rejectrule_{r.id}")
                 ]
             ])
-            await update.message.reply_text(
-                f"🤖 {r.rule_text}\n",
-                reply_markup=keyboard
-            )
+            await update.message.reply_text(f"🤖 {r.rule_text}\n", reply_markup=keyboard)
 
     await update.message.reply_text(msg, parse_mode="Markdown")
 
@@ -140,6 +202,11 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if draft:
                 await query.message.reply_text(
                     draft.text_variants[variant_idx]
+                )
+                # Remind user to use /posted after copy
+                await query.message.reply_text(
+                    "📋 After posting, use: `/posted {}`".format(draft_id),
+                    parse_mode="Markdown"
                 )
             else:
                 await query.message.reply_text("Draft not found.")
