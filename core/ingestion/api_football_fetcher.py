@@ -1,6 +1,6 @@
 import asyncio
-from datetime import datetime
-from typing import List
+from datetime import datetime, timedelta
+from typing import List, Optional
 import requests
 from config.settings import API_FOOTBALL_KEY
 from core.ingestion.base import BaseFetcher, NewsItem
@@ -9,7 +9,6 @@ from core.ingestion.monitor import record_success, record_failure
 BASE_URL = "https://v3.football.api-sports.io"
 HEADERS = {"x-apisports-key": API_FOOTBALL_KEY}
 
-# Top 5 leagues, domestic cups, European competitions, plus Saudi & Turkey
 LEAGUE_IDS = [
     39,    # Premier League
     528,   # Community Shield
@@ -33,15 +32,20 @@ LEAGUE_IDS = [
 ]
 
 class APIFootballFetcher(BaseFetcher):
+    def __init__(self, match_date: Optional[str] = None):
+        self.match_date = match_date
+
     async def fetch(self) -> List[NewsItem]:
         items = []
         try:
-            # Build league filter string: 39-140-135-...
             league_filter = "-".join(str(lid) for lid in LEAGUE_IDS)
-            # 1. Get live fixtures filtered by leagues
+            params = f"?live=all&league={league_filter}"
+            if self.match_date:
+                params += f"&date={self.match_date}"
+
             fixtures_data = await asyncio.to_thread(
                 self._get_json,
-                f"{BASE_URL}/fixtures?live=all&league={league_filter}"
+                f"{BASE_URL}/fixtures{params}"
             )
             live_fixtures = fixtures_data.get("response", [])
 
@@ -51,7 +55,6 @@ class APIFootballFetcher(BaseFetcher):
                 away = fixture["teams"]["away"]["name"]
                 status = fixture["fixture"]["status"]["short"]
 
-                # 2. Get events for this fixture
                 events_data = await asyncio.to_thread(
                     self._get_json,
                     f"{BASE_URL}/events?fixture={fixture_id}"
@@ -63,7 +66,6 @@ class APIFootballFetcher(BaseFetcher):
                     team = evt["team"]["name"]
                     minute = evt["time"]["elapsed"]
 
-                    # Build a tweet‑friendly title
                     if event_type == "Goal":
                         title = f"⚽ GOAL! {team} {detail} – {home} vs {away} ({minute}')"
                     elif event_type in ("Card", "Yellow Card", "Red Card"):
@@ -71,7 +73,7 @@ class APIFootballFetcher(BaseFetcher):
                     elif event_type == "subst":
                         title = f"↔️ SUB: {player} – {home} vs {away}"
                     else:
-                        continue  # skip other events
+                        continue
 
                     items.append(NewsItem(
                         title=title,
@@ -81,7 +83,6 @@ class APIFootballFetcher(BaseFetcher):
                         raw_text=f"{event_type} by {player} at {minute}'"
                     ))
 
-                # Also mark match start / halftime / fulltime if we want
                 if status in ("1H", "HT", "2H", "FT"):
                     items.append(NewsItem(
                         title=f"📢 {home} vs {away} – Status: {status}",

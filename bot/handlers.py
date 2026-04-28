@@ -7,12 +7,7 @@ from core.database import SessionLocal
 from core.models import Draft, Tweet, Rule, SourceHealth
 from bot.keyboard import copy_buttons
 
-# ---------- start ----------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    from config.settings import ADMIN_CHAT_ID
-    if str(update.effective_chat.id) != ADMIN_CHAT_ID:
-        await update.message.reply_text("🚫 Unauthorized.")
-        return
     await update.message.reply_text(
         "⚽ Welcome to your Football Twitter Agent!\n\n"
         "I'll push live match events and keep a queue of normal drafts for you to review.\n\n"
@@ -24,15 +19,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/rules - View / approve style rules\n"
         "/addrule <text> - Add a manual rule\n"
         "/source_status - Check news source health\n"
-        "/backup - Backup database to Telegram"
+        "/backup - Backup database to Telegram\n"
+        "/livecheck - Force check for live matches"
     )
 
-# ---------- queue ----------
 async def queue_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    from config.settings import ADMIN_CHAT_ID
-    if str(update.effective_chat.id) != ADMIN_CHAT_ID:
-        await update.message.reply_text("🚫 Unauthorized.")
-        return
     with SessionLocal() as session:
         drafts = session.query(Draft).filter(
             Draft.status == "pending",
@@ -55,12 +46,7 @@ async def queue_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode="Markdown"
         )
 
-# ---------- posted ----------
 async def posted(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    from config.settings import ADMIN_CHAT_ID
-    if str(update.effective_chat.id) != ADMIN_CHAT_ID:
-        await update.message.reply_text("🚫 Unauthorized.")
-        return
     if not context.args:
         await update.message.reply_text("Usage: /posted <draft_id> [tweet_url_or_id]")
         return
@@ -94,12 +80,7 @@ async def posted(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Later, use `/metrics {tweet_ref} <likes> <retweets> <replies> <impressions>` to add engagement."
     )
 
-# ---------- metrics ----------
 async def metrics(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    from config.settings import ADMIN_CHAT_ID
-    if str(update.effective_chat.id) != ADMIN_CHAT_ID:
-        await update.message.reply_text("🚫 Unauthorized.")
-        return
     if len(context.args) != 5:
         await update.message.reply_text("Usage: /metrics <tweet_ref> <likes> <retweets> <replies> <impressions>")
         return
@@ -124,12 +105,7 @@ async def metrics(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"❤️ {likes} 🔄 {retweets} 💬 {replies} 👀 {impressions}"
     )
 
-# ---------- stats ----------
 async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    from config.settings import ADMIN_CHAT_ID
-    if str(update.effective_chat.id) != ADMIN_CHAT_ID:
-        await update.message.reply_text("🚫 Unauthorized.")
-        return
     with SessionLocal() as session:
         cutoff = datetime.utcnow() - timedelta(days=7)
         tweets = session.query(Tweet).filter(
@@ -155,12 +131,7 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(msg, parse_mode="Markdown")
 
-# ---------- rules ----------
 async def rules(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    from config.settings import ADMIN_CHAT_ID
-    if str(update.effective_chat.id) != ADMIN_CHAT_ID:
-        await update.message.reply_text("🚫 Unauthorized.")
-        return
     with SessionLocal() as session:
         active_rules = session.query(Rule).filter_by(active=True).all()
         suggested = session.query(Rule).filter_by(active=False, source="auto").all()
@@ -185,12 +156,7 @@ async def rules(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(msg, parse_mode="Markdown")
 
-# ---------- addrule ----------
 async def addrule(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    from config.settings import ADMIN_CHAT_ID
-    if str(update.effective_chat.id) != ADMIN_CHAT_ID:
-        await update.message.reply_text("🚫 Unauthorized.")
-        return
     text = " ".join(context.args)
     if not text:
         await update.message.reply_text("Usage: /addrule <rule text>")
@@ -201,12 +167,7 @@ async def addrule(update: Update, context: ContextTypes.DEFAULT_TYPE):
         session.commit()
     await update.message.reply_text(f"✅ Rule added and active: {text}")
 
-# ---------- source_status ----------
 async def source_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    from config.settings import ADMIN_CHAT_ID
-    if str(update.effective_chat.id) != ADMIN_CHAT_ID:
-        await update.message.reply_text("🚫 Unauthorized.")
-        return
     with SessionLocal() as session:
         sources = session.query(SourceHealth).all()
     if not sources:
@@ -218,12 +179,7 @@ async def source_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         msg += f"{icon} {s.source_name} – last success: {s.last_success}\n"
     await update.message.reply_text(msg, parse_mode="Markdown")
 
-# ---------- backup ----------
 async def backup_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    from config.settings import ADMIN_CHAT_ID
-    if str(update.effective_chat.id) != ADMIN_CHAT_ID:
-        await update.message.reply_text("🚫 Unauthorized.")
-        return
     from core.backup import daily_backup
     try:
         path = daily_backup()
@@ -231,12 +187,7 @@ async def backup_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await update.message.reply_text(f"❌ Backup failed: {e}")
 
-# ---------- button handler ----------
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    from config.settings import ADMIN_CHAT_ID
-    if str(update.effective_chat.id) != ADMIN_CHAT_ID:
-        await update.message.reply_text("🚫 Unauthorized.")
-        return
     query = update.callback_query
     await query.answer()
     data = query.data
@@ -275,3 +226,29 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 session.delete(rule)
                 session.commit()
                 await query.edit_message_text(f"❌ Rule rejected and removed.")
+
+async def livecheck(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Force a live-match check via API-Football and return results."""
+    import asyncio
+    from core.ingestion.api_football_fetcher import APIFootballFetcher
+    from core.classification.event_tagger import classify_item
+
+    await update.message.reply_text("🔄 Checking for live matches...")
+
+    fetcher = APIFootballFetcher()
+    items = await fetcher.fetch()
+
+    if not items:
+        from datetime import datetime as dt, timedelta
+        yesterday = (dt.utcnow() - timedelta(hours=2)).strftime("%Y-%m-%d")
+        fetcher2 = APIFootballFetcher(match_date=yesterday)
+        items = await fetcher2.fetch()
+        if items:
+            await update.message.reply_text(f"⚠️ No live matches now, but found {len(items)} events from recent matches:")
+        else:
+            await update.message.reply_text("ℹ️ No live matches found in the last 2 hours.")
+            return
+
+    for item in items[:10]:
+        tag = classify_item(item)
+        await update.message.reply_text(f"[{tag}] {item.title}")

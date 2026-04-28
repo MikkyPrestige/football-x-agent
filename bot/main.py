@@ -3,7 +3,7 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 from config.settings import TELEGRAM_BOT_TOKEN
 from bot.handlers import (
     start, queue_callback, stats, rules, addrule, source_status,
-    posted, metrics, button_handler, backup_cmd
+    posted, metrics, button_handler, backup_cmd, livecheck
 )
 
 def main():
@@ -17,6 +17,7 @@ def main():
     app.add_handler(CommandHandler("addrule", addrule))
     app.add_handler(CommandHandler("source_status", source_status))
     app.add_handler(CommandHandler("backup", backup_cmd))
+    app.add_handler(CommandHandler("livecheck", livecheck))
     app.add_handler(CallbackQueryHandler(button_handler))
     print("Bot polling...")
     app.run_polling()
