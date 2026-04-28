@@ -1,0 +1,15 @@
+app = "football-x-agent"
+
+[build]
+  image = "Dockerfile"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
+
+[mounts]
+  source = "agent_data"
+  destination = "/app/data"
+
+[processes]
+  app = "bash start.sh"
