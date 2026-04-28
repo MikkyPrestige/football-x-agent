@@ -1,0 +1,11 @@
+python-telegram-bot[job-queue]==20.8
+openai
+feedparser
+praw
+beautifulsoup4
+requests
+sqlalchemy
+python-dotenv
+schedule
+pyyaml
+pytest
