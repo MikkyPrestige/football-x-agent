@@ -6,8 +6,6 @@ load_dotenv()
 # API keys and tokens
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")          # set to your Groq key
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-X_API_BEARER_TOKEN = os.getenv("X_API_BEARER_TOKEN")
-X_USER_ID = os.getenv("X_USER_ID")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")              # keep as backup
 API_FOOTBALL_KEY = os.getenv("API_FOOTBALL_KEY")
 

@@ -13,14 +13,14 @@ class Draft(Base):
     status = Column(String(32), default="pending")      # pending, pending_live, posted, rejected
     text_variants = Column(JSON, nullable=False)        # list of strings
     selected_variant = Column(Integer, default=None)    # index of chosen variant
-    posted_tweet_id = Column(String(64), ForeignKey("tweets.id"), nullable=True)
     match_confidence = Column(Float, default=None)
 
+    # Relationship: one-to-one with Tweet (Tweet has the FK)
     tweet = relationship("Tweet", back_populates="draft", uselist=False)
 
 class Tweet(Base):
     __tablename__ = "tweets"
-    id = Column(String(64), primary_key=True)           # X tweet ID
+    id = Column(String(64), primary_key=True)           # X tweet ID (or URL)
     draft_id = Column(Integer, ForeignKey("drafts.id"), nullable=True, unique=True)
     text = Column(Text, nullable=False)
     posted_at = Column(DateTime, nullable=False)
