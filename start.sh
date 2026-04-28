@@ -1,8 +1,10 @@
 #!/bin/bash
-mkdir -p /app/data
-# Start both processes for the Football Twitter Agent
+# Football Twitter Agent startup
 
 echo "Starting Football Twitter Agent..."
+
+# Initialize database (creates tables if missing)
+python -c "from core.database import init_db; init_db(); print('Database ready')"
 
 # Start scheduler in background
 python -m core.scheduler &
@@ -17,7 +19,6 @@ echo "Telegram bot started (PID $BOT_PID)"
 # Wait for either process to exit
 wait -n $SCHED_PID $BOT_PID
 
-# If we reach here, one process exited — exit with the same code so fly.io replaces the VM
 echo "A process exited, shutting down."
 kill $SCHED_PID $BOT_PID 2>/dev/null
 exit 1
