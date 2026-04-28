@@ -31,7 +31,7 @@ LEAGUE_IDS = [
     551,   # Turkish Super Cup
 ]
 LEAGUE_IDS_SET = set(LEAGUE_IDS)
-LIVE_STATUSES = {"1H", "HT", "2H", "LIVE"}
+LIVE_STATUSES = {"1H", "HT", "2H", "LIVE", "FT"}
 
 class APIFootballFetcher(BaseFetcher):
     def __init__(self, match_date: Optional[str] = None):
