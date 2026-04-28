@@ -39,17 +39,37 @@ class APIFootballFetcher(BaseFetcher):
         items = []
         try:
             league_filter = "-".join(str(lid) for lid in LEAGUE_IDS)
-            params = f"?live=all&league={league_filter}"
-            if self.match_date:
-                params += f"&date={self.match_date}"
-
-            fixtures_data = await asyncio.to_thread(
+            # 1. live=all
+            live_data = await asyncio.to_thread(
                 self._get_json,
-                f"{BASE_URL}/fixtures{params}"
+                f"{BASE_URL}/fixtures?live=all&league={league_filter}"
             )
-            live_fixtures = fixtures_data.get("response", [])
+            live_fixtures = live_data.get("response", [])
 
-            for fixture in live_fixtures:
+            # 2. today's fixtures (catch matches missing from live=all)
+            today = datetime.utcnow().strftime("%Y-%m-%d")
+            today_data = await asyncio.to_thread(
+                self._get_json,
+                f"{BASE_URL}/fixtures?date={today}&league={league_filter}"
+            )
+            today_fixtures = today_data.get("response", [])
+
+            # Merge, deduplicate, keep only in-play statuses from date list
+            LIVE_STATUSES = {"1H", "HT", "2H", "LIVE"}
+            seen_ids = set()
+            merged = []
+
+            for fix in live_fixtures + today_fixtures:
+                fid = fix["fixture"]["id"]
+                if fid in seen_ids:
+                    continue
+                seen_ids.add(fid)
+                status = fix["fixture"]["status"]["short"]
+                # For live=all we trust everything; for date list keep only in-play
+                if fix in live_fixtures or status in LIVE_STATUSES:
+                    merged.append(fix)
+
+            for fixture in merged:
                 fixture_id = fixture["fixture"]["id"]
                 home = fixture["teams"]["home"]["name"]
                 away = fixture["teams"]["away"]["name"]
