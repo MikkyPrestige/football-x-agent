@@ -21,3 +21,4 @@ LIVE_MATCH_HOURLY_CAP = 10    # max live tweets per match hour
 # Intervals (in seconds or minutes)
 NEWS_FETCH_INTERVAL_MINUTES = int(os.getenv("NEWS_FETCH_INTERVAL_MINUTES", 2))
 TWEET_POLL_INTERVAL_SECONDS = int(os.getenv("TWEET_POLL_INTERVAL_SECONDS", 300))
+MAX_ITEM_AGE_HOURS = int(os.getenv('MAX_ITEM_AGE_HOURS', '12'))

@@ -7,6 +7,7 @@ from core.ingestion.rss_fetcher import RSSFetcher
 from core.ingestion.reddit_fetcher import RedditFetcher
 from core.ingestion.google_news_fetcher import GoogleNewsFetcher
 from core.ingestion.api_football_fetcher import APIFootballFetcher
+from datetime import datetime, timedelta
 from core.generation.queue_manager import process_item
 from core.analytics.engine import run_weekly_analytics
 
@@ -22,6 +23,8 @@ RELEVANCE_KEYWORDS = {
     "champions league", "europa league", "fa cup", "copa del rey",
     "world cup", "euro", "copa america", "afcon"
 }
+
+MAX_AGE_HOURS = 12  # hours
 
 def is_relevant(title: str) -> bool:
     title_lower = title.lower()
@@ -42,7 +45,7 @@ async def fetch_all_and_process():
         print(f"Fetching {name}...")
         items = await fetcher.fetch()
         print(f"  {name}: got {len(items)} items")
-        relevant = [item for item in items if is_relevant(item.title)]
+        relevant = [item for item in items if is_relevant(item.title) and item.published > datetime.utcnow() - timedelta(hours=MAX_AGE_HOURS)]
         print(f"  {name}: {len(relevant)} relevant items, processing first {min(MAX_ITEMS_PER_SOURCE, len(relevant))}")
         for item in relevant[:MAX_ITEMS_PER_SOURCE]:
             if llm_calls >= MAX_LLM_CALLS_PER_CYCLE:

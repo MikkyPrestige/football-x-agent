@@ -2,6 +2,7 @@
 # Football Twitter Agent startup
 
 echo "Starting Football Twitter Agent..."
+python -c "from core.database import SessionLocal; from core.models import Draft, EventCache; s=SessionLocal(); s.query(Draft).delete(); s.query(EventCache).delete(); s.commit(); print("Old data cleared")"
 
 # Initialize database (creates tables if missing)
 python -c "from core.database import init_db; init_db(); print('Database ready')"
