@@ -30,6 +30,8 @@ LEAGUE_IDS = [
     203,   # Turkish Süper Lig
     551,   # Turkish Super Cup
 ]
+LEAGUE_IDS_SET = set(LEAGUE_IDS)
+LIVE_STATUSES = {"1H", "HT", "2H", "LIVE"}
 
 class APIFootballFetcher(BaseFetcher):
     def __init__(self, match_date: Optional[str] = None):
@@ -39,34 +41,38 @@ class APIFootballFetcher(BaseFetcher):
         items = []
         try:
             league_filter = "-".join(str(lid) for lid in LEAGUE_IDS)
-            # 1. live=all
+            # 1. live=all (original)
             live_data = await asyncio.to_thread(
                 self._get_json,
                 f"{BASE_URL}/fixtures?live=all&league={league_filter}"
             )
             live_fixtures = live_data.get("response", [])
 
-            # 2. today's fixtures (catch matches missing from live=all)
+            # 2. today's complete fixture list (catches matches missing from live=all)
             today = datetime.utcnow().strftime("%Y-%m-%d")
             today_data = await asyncio.to_thread(
                 self._get_json,
-                f"{BASE_URL}/fixtures?date={today}&league={league_filter}"
+                f"{BASE_URL}/fixtures?date={today}"
             )
             today_fixtures = today_data.get("response", [])
 
-            # Merge, deduplicate, keep only in-play statuses from date list
-            LIVE_STATUSES = {"1H", "HT", "2H", "LIVE"}
+            # Merge, deduplicate, keep only in‑play matches from date list
             seen_ids = set()
             merged = []
 
-            for fix in live_fixtures + today_fixtures:
+            for fix in live_fixtures:
+                fid = fix["fixture"]["id"]
+                seen_ids.add(fid)
+                merged.append(fix)
+
+            for fix in today_fixtures:
                 fid = fix["fixture"]["id"]
                 if fid in seen_ids:
                     continue
                 seen_ids.add(fid)
+                league_id = fix["league"]["id"]
                 status = fix["fixture"]["status"]["short"]
-                # For live=all we trust everything; for date list keep only in-play
-                if fix in live_fixtures or status in LIVE_STATUSES:
+                if league_id in LEAGUE_IDS_SET and status in LIVE_STATUSES:
                     merged.append(fix)
 
             for fixture in merged:
