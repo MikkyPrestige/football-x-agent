@@ -243,6 +243,7 @@ async def livecheck(update: Update, context: ContextTypes.DEFAULT_TYPE):
         yesterday = (dt.utcnow() - timedelta(hours=2)).strftime("%Y-%m-%d")
         fetcher2 = APIFootballFetcher(match_date=yesterday)
         items = await fetcher2.fetch()
+        await update.message.reply_text(f"Debug: today fetcher returned {len(items)} items")
         if items:
             await update.message.reply_text(f"⚠️ No live matches now, but found {len(items)} events from recent matches:")
         else:
