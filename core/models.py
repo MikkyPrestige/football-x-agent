@@ -53,3 +53,4 @@ class EventCache(Base):
     event_hash = Column(String(128), primary_key=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     expiry = Column(DateTime, nullable=False)
+

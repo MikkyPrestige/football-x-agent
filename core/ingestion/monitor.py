@@ -27,7 +27,7 @@ def _upsert_health(session: Session, name: str, success: bool):
         entry.status = "UP"
     else:
         entry.last_failure = now
-        entry.consecutive_failures += 1
+        entry.consecutive_failures = (entry.consecutive_failures or 0) + 1
         if entry.consecutive_failures >= 3:
             entry.status = "DOWN"
     session.commit()

@@ -8,6 +8,7 @@ from core.ingestion.rss_fetcher import RSSFetcher
 from core.ingestion.reddit_fetcher import RedditFetcher
 from core.ingestion.google_news_fetcher import GoogleNewsFetcher
 from core.ingestion.api_football_fetcher import APIFootballFetcher
+from core.ingestion.espn_fetcher import ESPNFetcher
 from core.generation.queue_manager import process_item
 from core.analytics.engine import run_weekly_analytics
 
@@ -35,6 +36,7 @@ async def fetch_all_and_process():
         ("Reddit", RedditFetcher()),
         ("Google News", GoogleNewsFetcher()),
         ("API-Football", APIFootballFetcher()),
+        ("ESPN", ESPNFetcher()),
     ]
     llm_calls = 0
     now = datetime.utcnow()

@@ -9,6 +9,7 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")              # keep as backup
 TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")
 API_FOOTBALL_KEY = os.getenv("API_FOOTBALL_KEY")
+THESPORTSDB_API_KEY = os.getenv("THESPORTSDB_API_KEY", "3")
 
 # Database
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///data/agent.db")
