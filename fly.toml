@@ -13,3 +13,6 @@ app = "football-x-agent"
 
 [processes]
   app = "bash start.sh"
+
+[deploy]
+  strategy = "immediate"
