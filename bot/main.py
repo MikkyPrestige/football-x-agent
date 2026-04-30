@@ -19,6 +19,25 @@ def main():
     app.add_handler(CommandHandler("backup", backup_cmd))
     app.add_handler(CommandHandler("livecheck", livecheck))
     app.add_handler(CallbackQueryHandler(button_handler))
+    
+    # Register command suggestions in Telegram
+    import asyncio
+    from telegram import BotCommand
+    async def set_commands():
+        commands = [
+            BotCommand("start", "Welcome message"),
+            BotCommand("queue", "View pending normal drafts"),
+            BotCommand("posted", "Mark a draft as posted"),
+            BotCommand("metrics", "Enter engagement numbers"),
+            BotCommand("stats", "Top & bottom tweets (likes default)"),
+            BotCommand("rules", "View / approve style rules"),
+            BotCommand("addrule", "Add a manual rule"),
+            BotCommand("source_status", "Check news source health"),
+            BotCommand("backup", "Backup database to Telegram"),
+            BotCommand("livecheck", "Force check for live matches"),
+        ]
+        await app.bot.set_my_commands(commands)
+    asyncio.run(set_commands())
     print("Bot polling...")
     app.run_polling()
 
