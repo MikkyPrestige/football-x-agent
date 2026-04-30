@@ -15,12 +15,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/queue - View pending normal drafts\n"
         "/posted <draft_id> - Mark a draft as posted and link a tweet ID\n"
         "/metrics <tweet_id> <likes> <retweets> <replies> <impressions> - Enter manual metrics\n"
-        "/stats - Top & bottom tweets\n"
+        "/stats - Top & bottom tweets (add: all, impressions, or leave empty for likes)\n"
+        "/tweets - List all posted tweets\n"
+        "/impressions - Top & bottom tweets by impressions\n"
         "/rules - View / approve style rules\n"
         "/addrule <text> - Add a manual rule\n"
         "/source_status - Check news source health\n"
         "/backup - Backup database to Telegram\n"
-        "/livecheck - Force check for live matches"
+        "/livecheck - Force check for live matches\n"
+        "/clearqueue - Delete all pending normal drafts"
     )
 
 async def queue_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
