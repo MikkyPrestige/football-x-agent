@@ -1,10 +1,27 @@
 """Telegram bot entry point. Run with: python -m bot.main"""
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler
+from telegram import BotCommand
 from config.settings import TELEGRAM_BOT_TOKEN
 from bot.handlers import (
     start, queue_callback, stats, rules, addrule, source_status,
     posted, metrics, button_handler, backup_cmd, livecheck
 )
+
+async def set_commands(app: Application):
+    """Register Telegram command suggestions on startup."""
+    commands = [
+        BotCommand("start", "Welcome message"),
+        BotCommand("queue", "View pending normal drafts"),
+        BotCommand("posted", "Mark a draft as posted"),
+        BotCommand("metrics", "Enter engagement numbers"),
+        BotCommand("stats", "Top & bottom tweets (likes default)"),
+        BotCommand("rules", "View / approve style rules"),
+        BotCommand("addrule", "Add a manual rule"),
+        BotCommand("source_status", "Check news source health"),
+        BotCommand("backup", "Backup database to Telegram"),
+        BotCommand("livecheck", "Force check for live matches"),
+    ]
+    await app.bot.set_my_commands(commands)
 
 def main():
     app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
@@ -19,25 +36,7 @@ def main():
     app.add_handler(CommandHandler("backup", backup_cmd))
     app.add_handler(CommandHandler("livecheck", livecheck))
     app.add_handler(CallbackQueryHandler(button_handler))
-    
-    # Register command suggestions in Telegram
-    import asyncio
-    from telegram import BotCommand
-    async def set_commands():
-        commands = [
-            BotCommand("start", "Welcome message"),
-            BotCommand("queue", "View pending normal drafts"),
-            BotCommand("posted", "Mark a draft as posted"),
-            BotCommand("metrics", "Enter engagement numbers"),
-            BotCommand("stats", "Top & bottom tweets (likes default)"),
-            BotCommand("rules", "View / approve style rules"),
-            BotCommand("addrule", "Add a manual rule"),
-            BotCommand("source_status", "Check news source health"),
-            BotCommand("backup", "Backup database to Telegram"),
-            BotCommand("livecheck", "Force check for live matches"),
-        ]
-        await app.bot.set_my_commands(commands)
-    asyncio.run(set_commands())
+    app.post_init = set_commands  # runs inside the event loop after init
     print("Bot polling...")
     app.run_polling()
 
