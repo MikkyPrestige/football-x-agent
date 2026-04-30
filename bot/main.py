@@ -2,6 +2,7 @@
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 from config.settings import TELEGRAM_BOT_TOKEN
 from bot.handlers import (
+    clearqueue,
     start, queue_callback, stats, rules, addrule, source_status,
     posted, metrics, button_handler, backup_cmd, livecheck, tweets_cmd, impressions_cmd
 )
@@ -18,6 +19,7 @@ def main():
     app.add_handler(CommandHandler("source_status", source_status))
     app.add_handler(CommandHandler("backup", backup_cmd))
     app.add_handler(CommandHandler("livecheck", livecheck))
+    app.add_handler(CommandHandler("clearqueue", clearqueue))
     app.add_handler(CommandHandler("tweets", tweets_cmd))
     app.add_handler(CommandHandler("impressions", impressions_cmd))
     app.add_handler(CallbackQueryHandler(button_handler))

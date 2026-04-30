@@ -281,3 +281,13 @@ async def impressions_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Wrapper around /stats impressions"""
     context.args = ['impressions']
     await stats(update, context)
+
+async def clearqueue(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Delete all pending normal drafts."""
+    with SessionLocal() as session:
+        deleted = session.query(Draft).filter(
+            Draft.status == "pending",
+            Draft.content_type == "normal"
+        ).delete()
+        session.commit()
+    await update.message.reply_text(f"🗑️ {deleted} pending draft(s) cleared.")
