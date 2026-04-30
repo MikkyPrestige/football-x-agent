@@ -271,3 +271,13 @@ async def livecheck(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for item in items[:10]:
         tag = classify_item(item)
         await update.message.reply_text(f"[{tag}] {item.title}")
+
+async def tweets_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Wrapper around /stats all"""
+    context.args = ['all']
+    await stats(update, context)
+
+async def impressions_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Wrapper around /stats impressions"""
+    context.args = ['impressions']
+    await stats(update, context)
