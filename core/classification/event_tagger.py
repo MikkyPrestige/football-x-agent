@@ -44,20 +44,21 @@ PATTERNS = {
 LIVE_INDICATORS = [
     "minute", "half-time", "halftime", "full-time", "kick-off",
     "substitution", "subbed", "injury", "stoppage", "added time",
-    "penalty shootout", "extra time", "var", "overturned"
+    "penalty shootout", "extra time", "var", "overturned",
+    "1h", "2h", "ht", "ft", "status:", "elapsed"
 ]
 
 def classify_item(item: NewsItem) -> str:
     """Return the best event type tag for a news item based on its title and raw text."""
     text = f"{item.title} {item.raw_text}".lower()
 
-    # Check high-priority live tags
+    # Check live indicators first (generic match events) - important!
+    if any(ind in text for ind in LIVE_INDICATORS):
+        return "LIVE_OTHER"
+
+    # Check high-priority live tags next
     for tag, keywords in PATTERNS.items():
         if any(kw in text for kw in keywords):
             return tag
-
-    # Check live indicators (generic match events)
-    if any(ind in text for ind in LIVE_INDICATORS):
-        return "LIVE_OTHER"
 
     return "OTHER"
