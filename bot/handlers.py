@@ -106,31 +106,49 @@ async def metrics(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    option = (context.args[0].lower() if context.args else 'likes')
     with SessionLocal() as session:
         cutoff = datetime.utcnow() - timedelta(days=7)
-        tweets = session.query(Tweet).filter(
-            Tweet.posted_at >= cutoff
-        ).order_by(desc(Tweet.likes)).all()
+        if option == 'all':
+            tweets = session.query(Tweet).filter(
+                Tweet.posted_at >= cutoff
+            ).order_by(desc(Tweet.posted_at)).all()
+        elif option == 'impressions':
+            tweets = session.query(Tweet).filter(
+                Tweet.posted_at >= cutoff
+            ).order_by(desc(Tweet.impressions)).all()
+        else:  # likes (default)
+            tweets = session.query(Tweet).filter(
+                Tweet.posted_at >= cutoff
+            ).order_by(desc(Tweet.likes)).all()
 
     if not tweets:
         await update.message.reply_text("No tweets recorded in the last 7 days.")
         return
 
-    top5 = tweets[:5]
-    bottom3 = tweets[-3:] if len(tweets) >= 3 else []
+    if option == 'all':
+        msg = "📋 **All posted tweets (last 7 days):**\n\n"
+        for i, t in enumerate(tweets, 1):
+            text_snippet = (t.text[:50] + '...') if len(t.text) > 50 else t.text
+            msg += f"{i}. `{t.id}`  {text_snippet}  ❤️{t.likes} 👀{t.impressions}\n"
+    else:
+        top5 = tweets[:5]
+        bottom3 = tweets[-3:] if len(tweets) >= 3 else []
+        metric_label = "Likes" if option == "likes" else "Impressions"
+        heart = "❤️" if option == "likes" else "👀"
+        val = lambda t: t.likes if option == "likes" else t.impressions
 
-    msg = "📊 **Tweet Performance (last 7 days)**\n\n"
-    msg += "**Top 5 by Likes:**\n"
-    for i, t in enumerate(top5, 1):
-        msg += f"{i}. {t.text[:60]}...  ❤️ {t.likes} 🔄 {t.retweets} 💬 {t.replies}\n"
+        msg = "📊 **Tweet Performance (last 7 days)**\n\n"
+        msg += f"**Top 5 by {metric_label}:**\n"
+        for i, t in enumerate(top5, 1):
+            msg += f"{i}. {t.text[:60]}...  {heart} {val(t)}\n"
 
-    if bottom3:
-        msg += "\n**Bottom 3:**\n"
-        for i, t in enumerate(bottom3, 1):
-            msg += f"{i}. {t.text[:60]}...  ❤️ {t.likes} 🔄 {t.retweets} 💬 {t.replies}\n"
+        if bottom3:
+            msg += f"\n**Bottom 3 by {metric_label}:**\n"
+            for i, t in enumerate(bottom3, 1):
+                msg += f"{i}. {t.text[:60]}...  {heart} {val(t)}\n"
 
     await update.message.reply_text(msg, parse_mode="Markdown")
-
 async def rules(update: Update, context: ContextTypes.DEFAULT_TYPE):
     with SessionLocal() as session:
         active_rules = session.query(Rule).filter_by(active=True).all()
