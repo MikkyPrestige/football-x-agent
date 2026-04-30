@@ -3,8 +3,17 @@
 
 echo "Starting Football Twitter Agent..."
 
-# Clear old drafts and event cache
-python -c "from core.database import SessionLocal; from core.models import Draft, EventCache; s=SessionLocal(); s.query(Draft).delete(); s.query(EventCache).delete(); s.commit(); print('Old data cleared')"
+# Only clear old event cache > 24h, keep drafts intact
+python -c "
+from core.database import SessionLocal
+from core.models import EventCache
+from datetime import datetime, timedelta
+s = SessionLocal()
+cutoff = datetime.utcnow() - timedelta(hours=24)
+s.query(EventCache).filter(EventCache.created_at < cutoff).delete()
+s.commit()
+print('Stale event cache cleared')
+"
 
 # Initialize database (creates tables if missing)
 python -c "from core.database import init_db; init_db(); print('Database ready')"
