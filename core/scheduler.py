@@ -82,7 +82,7 @@ def analytics_job():
 
 def main():
     schedule.every(30).minutes.do(job)
-    schedule.every().monday.at("02:00").do(analytics_job)
+    schedule.every().tuesday.at("02:00").do(analytics_job)
     print("Scheduler started — news every 30 min, analytics on Monday 02:00.")
     job()
     while True:
