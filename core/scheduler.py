@@ -17,18 +17,28 @@ MAX_LLM_CALLS_PER_CYCLE = 6
 MAX_AGE_HOURS = 12  # hours
 
 RELEVANCE_KEYWORDS = {
+    # original keywords
     "goal", "transfer", "sign", "deal", "rumour", "injury", "manager",
     "sack", "appoint", "champion", "relegation", "promotion",
     "var", "red card", "yellow card", "hattrick", "brace", "derby",
     "el clasico", "classique", "rival", "record", "stats",
     "premier league", "la liga", "serie a", "bundesliga", "ligue 1",
     "champions league", "europa league", "fa cup", "copa del rey",
-    "world cup", "euro", "copa america", "afcon"
+    "world cup", "euro", "copa america", "afcon",
+    # live match indicators (so status lines pass)
+    "status", "vs", "1h", "2h", "ht", "ft", "elapsed",
+    "minute", "half-time", "full-time", "kick-off",
+    "substitution", "subbed"
 }
 
-def is_relevant(title: str) -> bool:
-    title_lower = title.lower()
-    return any(kw in title_lower for kw in RELEVANCE_KEYWORDS)
+def is_relevant(item) -> bool:
+    # check title first
+    if any(kw in item.title.lower() for kw in RELEVANCE_KEYWORDS):
+        return True
+    # then check raw_text for stat or live indicators
+    if item.raw_text:
+        return any(kw in item.raw_text.lower() for kw in RELEVANCE_KEYWORDS)
+    return False
 
 async def fetch_all_and_process():
     fetchers = [
@@ -52,7 +62,7 @@ async def fetch_all_and_process():
         fresh_items = [item for item in items if item.published and item.published > age_cutoff]
         print(f"  {name}: {len(fresh_items)} fresh items (within {MAX_AGE_HOURS}h)")
         # 2. Apply relevance filter
-        relevant = [item for item in fresh_items if is_relevant(item.title)]
+        relevant = [item for item in fresh_items if is_relevant(item)]
         print(f"  {name}: {len(relevant)} relevant items")
         if not relevant:
             continue
